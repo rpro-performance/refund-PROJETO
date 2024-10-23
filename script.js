@@ -4,6 +4,10 @@ const amount = document.getElementById("amount")
 const expense = document.getElementById("expense")
 const category = document.getElementById("category")
 const expenseList = document.querySelector("ul")
+const expenseQuantity = document.querySelector("aside header p span")
+const expenseTotal = document.querySelector("aside header h2")
+
+
 //capturando o evento do input.
 amount.oninput = () => {
     //obtem o valor atual do input remove as palavras.
@@ -64,14 +68,95 @@ function expenseAdd(newExpense) {
         const expenseCategory = document.createElement("span")
         expenseCategory.textContent = newExpense.category_name
 
+        //cria um valor da despesa.
+        const expenseAmount = document.createElement("span")
+        expenseAmount.classList.add("expense-amount")
+        expenseAmount.innerHTML = `<small>R$</small>${newExpense.amount.toUpperCase().replace("R$", "")}`
+
+        //cria o icone de remover
+        const removeIcon = document.createElement("img")
+        removeIcon.classList.add("remove-icon")
+        removeIcon.setAttribute("src", "img/remove.svg")
+        removeIcon.setAttribute("alt", "remover")
         // adicionar name e category na div 
         expenseInfo.append(expenseName, expenseCategory)
 
         //adiciona as informações do icone
-        expenseItem.append(expenseIcon, expenseInfo)
+        expenseItem.append(expenseIcon, expenseInfo, expenseAmount, removeIcon)
         expenseList.append(expenseItem)
+
+        //limpa os formularios 
+        formclear()
+
+        //atualiza totais.
+        updateTotals()
     } catch (error) {
         alert("não foi possivel atualizar a lista de despesas.")
         console.log(error)
     }
+}
+
+//função que atualiza total.
+function updateTotals() {
+    try {
+        const items = expenseList.children
+        
+        expenseQuantity.textContent = `${items.length} ${
+        items.length > 1 ? "despesas" : "despesa"
+        }`
+
+        //variavel para incrementar o total.
+        let total = 0 
+
+        //percorrer cada item (li) da lista (ul)
+        for (let item = 0; item < items.length; item++) {
+          
+            const itemAmount = items[item].querySelector(".expense-amount")
+            
+            //remove caracteres não númericos e substitui a virgula.
+            let value = itemAmount.textContent.replace(/[^\d,]/g, "").replace(",", ".")
+
+            //converte o valor para float.
+            value = parseFloat(value)
+
+            //verifica se é um número valido.
+            if (isNaN(value)) {
+                return alert("não foi possivel calcular, o valor não é um número.")
+            }
+
+            total += Number(value)
+        }
+
+        const symbolBRL = document.createElement("small")
+        symbolBRL.textContent = "R$"
+
+        total = formatCurrencyBRL(total).toUpperCase().replace("R$", "")
+
+        //limpa o conteudo do elemento
+        expenseTotal.innerHTML = ""
+
+        expenseTotal.append(symbolBRL, total)
+    } catch (error) {
+        console.log(error)
+        alert("Não foi possivel atualizar os totais.")
+    }
+}
+
+//evento de clique.
+expenseList.addEventListener("click", function (event) {
+    if (event.target.classList.contains("remove-icon")) {
+        const item = event.target.closest(".expense")
+
+        item.remove()
+    }
+    
+    updateTotals()
+})
+
+function formclear() {
+    expense.value = ""
+    category.value = ""
+    amount.value = ""
+
+    expense.focus()
 }
